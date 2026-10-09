@@ -1,1083 +1,1002 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AES Payload Encrypt / Decrypt</title>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>AES Payload Encrypt / Decrypt</title>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
 
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            margin: 0;
-            font-family: Arial, Helvetica, sans-serif;
-            background: #f4f6f8;
-            color: #1f2937;
-        }
-
-        .container {
-            max-width: 1100px;
-            margin: 40px auto;
-            padding: 0 20px;
-        }
-
-        h1 {
-            margin-bottom: 8px;
-        }
-
-        .subtitle {
-            color: #6b7280;
-            margin-bottom: 25px;
-        }
-
-        .card {
-            background: white;
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-        }
-
-        label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        textarea,
-        input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            font-family: Consolas, monospace;
-            font-size: 14px;
-            outline: none;
-        }
-
-        textarea:focus,
-        input:focus {
-            border-color: #2563eb;
-            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
-        }
-
-        textarea {
-            min-height: 180px;
-            resize: vertical;
-        }
-
-        .key-input {
-            margin-bottom: 20px;
-        }
-
-        .buttons {
-            display: flex;
-            gap: 12px;
-            margin-top: 15px;
-            flex-wrap: wrap;
-        }
-
-        button {
-            border: 0;
-            border-radius: 8px;
-            padding: 11px 20px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        button:hover {
-            opacity: 0.9;
-        }
-
-        .encrypt {
-            background: #2563eb;
-            color: white;
-        }
-
-        .decrypt {
-            background: #059669;
-            color: white;
-        }
-
-        .clear {
-            background: #6b7280;
-            color: white;
-        }
-
-        .json-format {
-            background: #7c3aed;
-            color: white;
-        }
-
-        .copy-btn {
-            margin-top: 10px;
-            background: #111827;
-            color: white;
-        }
-
-        .result {
-            margin-top: 20px;
-        }
-
-        .status {
-            padding: 12px;
-            border-radius: 8px;
-            margin-top: 15px;
-            display: none;
-            white-space: pre-wrap;
-        }
-
-        .success {
-            display: block;
-            background: #dcfce7;
-            color: #166534;
-        }
-
-        .error {
-            display: block;
-            background: #fee2e2;
-            color: #991b1b;
-        }
-
-        .example {
-            background: #f9fafb;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 15px;
-            overflow-x: auto;
-        }
-
-        code {
-            font-family: Consolas, monospace;
-        }
-
-        pre {
-            white-space: pre-wrap;
-            word-break: break-all;
-        }
-
-        .row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        .key-info {
-            margin-top: 8px;
-            font-size: 12px;
-            color: #6b7280;
-        }
-
-        .labtx-input {
-            margin-top: 10px;
-        }
-
-        @media (max-width: 800px) {
-            .row {
-                grid-template-columns: 1fr;
+        <style>
+            * {
+                box-sizing: border-box;
             }
-        }
-/* Tabs */ .tabs { display: flex; gap: 10px; margin-bottom: 20px; padding: 6px; background: #e5e7eb; border-radius: 10px; }
 
-.tab-button { flex: 1; padding: 13px 16px; border: none; border-radius: 8px; background: transparent; color: #374151; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s, color 0.2s; }
+            body {
+                margin: 0;
+                font-family: Arial, Helvetica, sans-serif;
+                background: #f4f6f8;
+                color: #1f2937;
+            }
 
-.tab-button.active { background: #2563eb; color: #ffffff; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.12); }
+            .container {
+                max-width: 1100px;
+                margin: 40px auto;
+                padding: 0 20px;
+            }
 
-.tab-content { display: none; }
+            h1 {
+                margin-bottom: 8px;
+            }
 
-.tab-content.active { display: block; }
+            .subtitle {
+                color: #6b7280;
+                margin-bottom: 25px;
+            }
 
-@media (max-width: 500px) { .tabs { flex-direction: column; } }
+            .card {
+                background: white;
+                border-radius: 12px;
+                padding: 24px;
+                margin-bottom: 20px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            }
 
-#inputPayload,
-#outputPayload {
-    height: 450px;
-    min-height: 350px;
-    resize: vertical;
-}
-    </style>
-</head>
+            label {
+                display: block;
+                font-weight: 600;
+                margin-bottom: 8px;
+            }
 
-<body>
+            textarea,
+            input {
+                width: 100%;
+                padding: 12px;
+                border: 1px solid #d1d5db;
+                border-radius: 8px;
+                font-family: Consolas, monospace;
+                font-size: 14px;
+                outline: none;
+            }
 
-<div class="container">
+            textarea:focus,
+            input:focus {
+                border-color: #2563eb;
+                box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+            }
 
-    <h1>AES Payload Encrypt / Decrypt</h1>
+            textarea {
+                min-height: 180px;
+                resize: vertical;
+            }
 
-    <div class="subtitle">
-        CryptoJS AES tool compatible with your application
-    </div>
+            .key-input {
+                margin-bottom: 20px;
+            }
 
-<div class="tabs"> <button type="button" class="tab-button active" onclick="openTab('aesTab', this)"> 🔐 AES Encrypt / Decrypt </button>
+            .buttons {
+                display: flex;
+                gap: 12px;
+                margin-top: 15px;
+                flex-wrap: wrap;
+            }
 
-<button type="button" class="tab-button" onclick="openTab('pdfTab', this)"> 📄 PDF ↔ Base64 </button> </div>
+            button {
+                border: 0;
+                border-radius: 8px;
+                padding: 11px 20px;
+                font-size: 14px;
+                font-weight: 600;
+                cursor: pointer;
+            }
 
-    <div class="card">
-	<div id="aesTab" class="tab-content active">
-        <!-- LABTX -->
-        <div class="key-input">
+            button:hover {
+                opacity: 0.9;
+            }
 
-            <label for="labtx">
-                AES Key
-            </label>
+            .encrypt {
+                background: #2563eb;
+                color: white;
+            }
 
-            <input
-                type="text"
-                id="labtx"
-                class="labtx-input"
-                placeholder="Enter AES Key"
-                autocomplete="off"
-            >
+            .decrypt {
+                background: #059669;
+                color: white;
+            }
 
-            <div class="buttons">
-                <button
-                    class="json-format"
-                    onclick="extractAESKey()">
-                    Extract AES Key
+            .clear {
+                background: #6b7280;
+                color: white;
+            }
+
+            .json-format {
+                background: #7c3aed;
+                color: white;
+            }
+
+            .copy-btn {
+                margin-top: 10px;
+                background: #111827;
+                color: white;
+            }
+
+            .result {
+                margin-top: 20px;
+            }
+
+            .status {
+                padding: 12px;
+                border-radius: 8px;
+                margin-top: 15px;
+                display: none;
+                white-space: pre-wrap;
+            }
+
+            .success {
+                display: block;
+                background: #dcfce7;
+                color: #166534;
+            }
+
+            .error {
+                display: block;
+                background: #fee2e2;
+                color: #991b1b;
+            }
+
+            .example {
+                background: #f9fafb;
+                padding: 15px;
+                border-radius: 8px;
+                margin-top: 15px;
+                overflow-x: auto;
+            }
+
+            code {
+                font-family: Consolas, monospace;
+            }
+
+            pre {
+                white-space: pre-wrap;
+                word-break: break-all;
+            }
+
+            .row {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+            }
+
+            .key-info {
+                margin-top: 8px;
+                font-size: 12px;
+                color: #6b7280;
+            }
+
+            .labtx-input {
+                margin-top: 10px;
+            }
+
+            @media (max-width: 800px) {
+                .row {
+                    grid-template-columns: 1fr;
+                }
+            }
+            /* Tabs */
+            .tabs {
+                display: flex;
+                gap: 10px;
+                margin-bottom: 20px;
+                padding: 6px;
+                background: #e5e7eb;
+                border-radius: 10px;
+            }
+
+            .tab-button {
+                flex: 1;
+                padding: 13px 16px;
+                border: none;
+                border-radius: 8px;
+                background: transparent;
+                color: #374151;
+                font-size: 15px;
+                font-weight: 600;
+                cursor: pointer;
+                transition:
+                    background 0.2s,
+                    color 0.2s;
+            }
+
+            .tab-button.active {
+                background: #2563eb;
+                color: #ffffff;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.12);
+            }
+
+            .tab-content {
+                display: none;
+            }
+
+            .tab-content.active {
+                display: block;
+            }
+
+            @media (max-width: 500px) {
+                .tabs {
+                    flex-direction: column;
+                }
+            }
+
+            #inputPayload,
+            #outputPayload {
+                height: 450px;
+                min-height: 350px;
+                resize: vertical;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div class="container">
+            <h1>AES Payload Encrypt / Decrypt</h1>
+
+            <div class="subtitle">CryptoJS AES tool compatible with your application</div>
+
+            <div class="tabs">
+                <button type="button" class="tab-button active" onclick="openTab('aesTab', this)">
+                    🔐 AES Encrypt / Decrypt
+                </button>
+                <button type="button" class="tab-button" onclick="openTab('pdfTab', this)">📄 PDF ↔ Base64</button>
+                <button type="button" class="tab-button" onclick="openTab('randomTab', this)">
+                    🎲 Random Generator
                 </button>
             </div>
-        </div>
 
-        <!-- AES KEY -->
-        <div class="key-input">
+            <div class="card">
+                <div id="aesTab" class="tab-content active">
+                    <!-- LABTX -->
+                    <div class="key-input">
+                        <label for="labtx"> AES Key </label>
 
-            <label for="aesKey">
-                AES Key / Passphrase
-            </label>
+                        <input
+                            type="text"
+                            id="labtx"
+                            class="labtx-input"
+                            placeholder="Enter AES Key"
+                            autocomplete="off"
+                        />
 
-            <input
-                type="password"
-                id="aesKey"
-                placeholder="Extracted AES key"
-                autocomplete="off"
-            >
+                        <div class="buttons">
+                            <button class="json-format" onclick="extractAESKey()">Extract AES Key</button>
+                        </div>
+                    </div>
 
-        </div>
+                    <!-- AES KEY -->
+                    <div class="key-input">
+                        <label for="aesKey"> AES Key / Passphrase </label>
 
-        <div class="row">
+                        <input type="password" id="aesKey" placeholder="Extracted AES key" autocomplete="off" />
+                    </div>
 
-            <!-- INPUT -->
-            <div>
+                    <div class="row">
+                        <!-- INPUT -->
+                        <div>
+                            <label for="inputPayload"> Input Payload </label>
 
-                <label for="inputPayload">
-                    Input Payload
-                </label>
+                            <textarea
+                                id="inputPayload"
+                                placeholder="For encryption: enter JSON&#10;&#10;For decryption: enter only the encrypted string from U2F"
+                            ></textarea>
 
-                <textarea
-                    id="inputPayload"
-                    placeholder="For encryption: enter JSON&#10;&#10;For decryption: enter only the encrypted string from U2F"
-                ></textarea>
+                            <div class="buttons">
+                                <button class="encrypt" onclick="encryptPayload()">🔐 Encrypt</button>
 
-                <div class="buttons">
+                                <button class="decrypt" onclick="decryptPayload()">🔓 Decrypt</button>
 
-                    <button
-                        class="encrypt"
-                        onclick="encryptPayload()">
-                        🔐 Encrypt
-                    </button>
+                                <button class="json-format" onclick="formatJSON()">Format JSON</button>
 
-                    <button
-                        class="decrypt"
-                        onclick="decryptPayload()">
-                        🔓 Decrypt
-                    </button>
+                                <button class="clear" onclick="resetForm()">Reset</button>
+                            </div>
+                        </div>
 
-                    <button
-                        class="json-format"
-                        onclick="formatJSON()">
-                        Format JSON
-                    </button>
+                        <!-- OUTPUT -->
+                        <div>
+                            <label for="outputPayload"> Output </label>
 
-                    <button
-                        class="clear"
-                        onclick="resetForm()">
-                        Reset
-                    </button>
+                            <textarea
+                                id="outputPayload"
+                                placeholder="Encrypted or decrypted result will appear here..."
+                                readonly
+                            ></textarea>
 
+                            <button class="copy-btn" onclick="copyOutput()">Copy Output</button>
+                        </div>
+                    </div>
+
+                    <div id="status" class="status"></div>
                 </div>
+            </div>
+            <!-- PDF / BASE64 CONVERTER -->
+            <div class="card">
+                <div id="pdfTab" class="tab-content">
+                    <h2>PDF ↔ Base64 Converter</h2>
 
+                    <div class="subtitle">Convert PDF files to Base64 and Base64 strings back to PDF.</div>
+
+                    <!-- PDF TO BASE64 -->
+                    <h3>PDF to Base64</h3>
+
+                    <label for="pdfFile">Select PDF File</label>
+                    <input type="file" id="pdfFile" accept=".pdf,application/pdf" />
+
+                    <div class="buttons">
+                        <button class="encrypt" onclick="convertPDFToBase64()">PDF to Base64</button>
+                        <button class="json-format" onclick="copyPDFBase64()">Copy Base64</button>
+                        <button class="decrypt" onclick="downloadBase64Text()">Download Base64 TXT</button>
+                        <button class="clear" onclick="resetPDFToBase64()">Reset</button>
+                    </div>
+
+                    <div class="key-info" id="pdfInfo"></div>
+
+                    <label for="pdfBase64Output">Base64 Output</label>
+                    <textarea id="pdfBase64Output" placeholder="PDF Base64 string will appear here..."></textarea>
+
+                    <div id="pdfStatus" class="status"></div>
+
+                    <hr style="margin: 30px 0; border: 0; border-top: 1px solid #e5e7eb" />
+
+                    <!-- BASE64 TO PDF -->
+                    <h3>Base64 to PDF</h3>
+
+                    <label for="base64Input">Paste Base64 String</label>
+                    <textarea
+                        id="base64Input"
+                        placeholder="Paste raw Base64 or a data URL such as data:application/pdf;base64,..."
+                    ></textarea>
+
+                    <div class="buttons">
+                        <button class="decrypt" onclick="convertBase64ToPDF()">Base64 to PDF</button>
+                        <button class="clear" onclick="resetBase64ToPDF()">Reset</button>
+                    </div>
+
+                    <div id="base64Status" class="status"></div>
+                </div>
             </div>
 
-            <!-- OUTPUT -->
-            <div>
+            <div id="randomTab" class="tab-content">
+                <div class="card">
+                    <h2>Random Alphanumeric Generator</h2>
 
-                <label for="outputPayload">
-                    Output
-                </label>
+                    <div class="subtitle">Generate random strings with a custom length.</div>
 
-                <textarea
-                    id="outputPayload"
-                    placeholder="Encrypted or decrypted result will appear here..."
-                    readonly
-                ></textarea>
+                    <label for="randomLength">String Length</label>
+                    <input type="number" id="randomLength" min="1" max="10000" value="16" placeholder="Enter length" />
 
-                <button
-                    class="copy-btn"
-                    onclick="copyOutput()">
-                    Copy Output
-                </button>
+                    <div class="buttons">
+                        <button type="button" class="encrypt" onclick="generateRandomString()">🎲 Generate</button>
 
+                        <button type="button" class="json-format" onclick="copyRandomString()">Copy Output</button>
+
+                        <button type="button" class="clear" onclick="resetRandomGenerator()">Reset</button>
+                    </div>
+
+                    <div style="margin-top: 20px">
+                        <label for="randomOutput">Generated String</label>
+                        <textarea
+                            id="randomOutput"
+                            placeholder="Your random string will appear here..."
+                            readonly
+                            style="min-height: 140px"
+                        ></textarea>
+                    </div>
+
+                    <div id="randomStatus" class="status"></div>
+                </div>
             </div>
-
         </div>
 
-        <div id="status" class="status"></div>
-
-    </div>
-</div>
-<!-- PDF / BASE64 CONVERTER -->
-<div class="card">
- <div id="pdfTab" class="tab-content">
-    <h2>PDF ↔ Base64 Converter</h2>
-
-    <div class="subtitle">
-        Convert PDF files to Base64 and Base64 strings back to PDF.
-    </div>
-
-    <!-- PDF TO BASE64 -->
-    <h3>PDF to Base64</h3>
-
-    <label for="pdfFile">Select PDF File</label>
-    <input
-        type="file"
-        id="pdfFile"
-        accept=".pdf,application/pdf"
-    >
-
-    <div class="buttons">
-        <button class="encrypt" onclick="convertPDFToBase64()">
-            PDF to Base64
-        </button>
-        <button class="json-format" onclick="copyPDFBase64()">
-            Copy Base64
-        </button>
-        <button class="decrypt" onclick="downloadBase64Text()">
-            Download Base64 TXT
-        </button>
-        <button class="clear" onclick="resetPDFToBase64()">
-            Reset
-        </button>
-    </div>
-
-    <div class="key-info" id="pdfInfo"></div>
-
-    <label for="pdfBase64Output">Base64 Output</label>
-    <textarea
-        id="pdfBase64Output"
-        placeholder="PDF Base64 string will appear here..."
-    ></textarea>
-
-    <div id="pdfStatus" class="status"></div>
-
-    <hr style="margin: 30px 0; border: 0; border-top: 1px solid #e5e7eb;">
-
-    <!-- BASE64 TO PDF -->
-    <h3>Base64 to PDF</h3>
-
-    <label for="base64Input">Paste Base64 String</label>
-    <textarea
-        id="base64Input"
-        placeholder="Paste raw Base64 or a data URL such as data:application/pdf;base64,..."
-    ></textarea>
-
-    <div class="buttons">
-        <button class="decrypt" onclick="convertBase64ToPDF()">
-            Base64 to PDF
-        </button>
-        <button class="clear" onclick="resetBase64ToPDF()">
-            Reset
-        </button>
-    </div>
-
-    <div id="base64Status" class="status"></div>
-</div>
-</div>
-
-    </div>
-
-<script>
-
-/*
- * ============================================================
- * EXTRACT AES KEY FROM LABTX
- * ============================================================
- *
- * Equivalent to:
- *
- * LABTX.substring(2, LABTX.length - 4)
- *
- * Example:
- *
- * LABTX = "XX1234567890YYYY"aaaaaar45rtt
- *
- * Result:
- *
- * "1234567890"
- *
- */
-
-
-function extractAESKey() {
-
-    clearStatus();
-
-    try {
-
-        const LABTX = document
-            .getElementById("labtx")
-            .value
-            .trim();
-
-        if (!LABTX) {
-            throw new Error("Please enter AES Key.");
-        }
-
-        if (LABTX.length <= 6) {
-            throw new Error(
-                "LABTX must contain more than 6 characters."
-            );
-        }
-
-        // Final key:
-        const finalKey = LABTX.substring(
-            2,
-            LABTX.length - 4
-        );
-
-        // Put extracted key into AES key field.
-        document.getElementById("aesKey").value = finalKey;
-
-        showStatus(
-            "AES key extracted successfully.",
-            "success"
-        );
-
-    } catch (error) {
-
-        showStatus(
-            "Key extraction failed:\n" + error.message,
-            "error"
-        );
-
-    }
-}
-
-/*
- * ============================================================
- * AES ENCRYPTION
- * ============================================================
- */
-
-function encryptAES(payload, aesKey) {
-
-    if (!aesKey) {
-        throw new Error("AES key is required.");
-    }
-
-    return CryptoJS.AES.encrypt(
-        JSON.stringify(payload),
-        aesKey
-    ).toString();
-}
-
-/*
- * ============================================================
- * AES DECRYPTION
- * ============================================================
- */
+        <script>
+            /*
+             * ============================================================
+             * EXTRACT AES KEY FROM LABTX
+             * ============================================================
+             *
+             * Equivalent to:
+             *
+             * LABTX.substring(2, LABTX.length - 4)
+             *
+             * Example:
+             *
+             * LABTX = "XX1234567890YYYY"aaaaaar45rtt
+             *
+             * Result:
+             *
+             * "1234567890"
+             *
+             */
+
+            function extractAESKey() {
+                clearStatus();
+
+                try {
+                    const LABTX = document.getElementById("labtx").value.trim();
+
+                    if (!LABTX) {
+                        throw new Error("Please enter AES Key.");
+                    }
+
+                    if (LABTX.length <= 6) {
+                        throw new Error("LABTX must contain more than 6 characters.");
+                    }
+
+                    // Final key:
+                    const finalKey = LABTX.substring(2, LABTX.length - 4);
+
+                    // Put extracted key into AES key field.
+                    document.getElementById("aesKey").value = finalKey;
+
+                    showStatus("AES key extracted successfully.", "success");
+                } catch (error) {
+                    showStatus("Key extraction failed:\n" + error.message, "error");
+                }
+            }
+
+            /*
+             * ============================================================
+             * AES ENCRYPTION
+             * ============================================================
+             */
+
+            function encryptAES(payload, aesKey) {
+                if (!aesKey) {
+                    throw new Error("AES key is required.");
+                }
+
+                return CryptoJS.AES.encrypt(JSON.stringify(payload), aesKey).toString();
+            }
+
+            /*
+             * ============================================================
+             * AES DECRYPTION
+             * ============================================================
+             */
+
+            function decryptAES(encryptedPayload, aesKey) {
+                if (!aesKey) {
+                    throw new Error("AES key is required.");
+                }
+
+                if (!encryptedPayload) {
+                    throw new Error("Encrypted payload is empty.");
+                }
+
+                encryptedPayload = encryptedPayload.trim();
+
+                try {
+                    const decrypted = CryptoJS.AES.decrypt(encryptedPayload, aesKey);
+
+                    if (!decrypted || decrypted.sigBytes <= 0) {
+                        throw new Error("No decrypted data. Verify the AES key.");
+                    }
+
+                    const decryptedText = decrypted.toString(CryptoJS.enc.Utf8);
+
+                    if (!decryptedText) {
+                        throw new Error("Decryption returned empty data. Verify the AES key.");
+                    }
+
+                    return decryptedText;
+                } catch (error) {
+                    if (error.message && error.message.includes("Malformed UTF-8")) {
+                        throw new Error(
+                            "Malformed UTF-8 data. The AES key does not match " +
+                                "the key used to encrypt this payload, or the " +
+                                "ciphertext/configuration is different."
+                        );
+                    }
+
+                    throw error;
+                }
+            }
 
-function decryptAES(encryptedPayload, aesKey) {
-
-    if (!aesKey) {
-        throw new Error("AES key is required.");
-    }
-
-    if (!encryptedPayload) {
-        throw new Error("Encrypted payload is empty.");
-    }
-
-    encryptedPayload = encryptedPayload.trim();
-
-    try {
-
-        const decrypted = CryptoJS.AES.decrypt(
-            encryptedPayload,
-            aesKey
-        );
+            /*
+             * ============================================================
+             * ENCRYPT BUTTON
+             * ============================================================
+             */
 
-        if (!decrypted || decrypted.sigBytes <= 0) {
-            throw new Error(
-                "No decrypted data. Verify the AES key."
-            );
-        }
+            async function encryptPayload() {
+                clearStatus();
 
-        const decryptedText =
-            decrypted.toString(CryptoJS.enc.Utf8);
+                try {
+                    const key = document.getElementById("aesKey").value.trim();
 
-        if (!decryptedText) {
-            throw new Error(
-                "Decryption returned empty data. Verify the AES key."
-            );
-        }
-
-        return decryptedText;
-
-    } catch (error) {
-
-        if (
-            error.message &&
-            error.message.includes("Malformed UTF-8")
-        ) {
-            throw new Error(
-                "Malformed UTF-8 data. The AES key does not match " +
-                "the key used to encrypt this payload, or the " +
-                "ciphertext/configuration is different."
-            );
-        }
+                    const input = document.getElementById("inputPayload").value.trim();
 
-        throw error;
-    }
-}
+                    if (!key) {
+                        throw new Error("Please enter or extract the AES key.");
+                    }
 
-/*
- * ============================================================
- * ENCRYPT BUTTON
- * ============================================================
- */
+                    if (!input) {
+                        throw new Error("Please enter a JSON payload.");
+                    }
 
-async function encryptPayload() {
+                    const payload = JSON.parse(input);
 
-    clearStatus();
+                    const encrypted = encryptAES(payload, key);
 
-    try {
+                    document.getElementById("outputPayload").value = encrypted;
 
-        const key =
-            document.getElementById("aesKey").value.trim();
+                    showStatus("Encryption successful.", "success");
+                } catch (error) {
+                    showStatus("Encryption failed:\n" + error.message, "error");
+                }
+            }
 
-        const input =
-            document.getElementById("inputPayload").value.trim();
+            /*
+             * ============================================================
+             * DECRYPT BUTTON
+             * ============================================================
+             */
 
-        if (!key) {
-            throw new Error(
-                "Please enter or extract the AES key."
-            );
-        }
+            async function decryptPayload() {
+                clearStatus();
 
-        if (!input) {
-            throw new Error(
-                "Please enter a JSON payload."
-            );
-        }
+                try {
+                    const key = document.getElementById("aesKey").value.trim();
 
-        const payload = JSON.parse(input);
+                    const input = document.getElementById("inputPayload").value.trim();
 
-        const encrypted =
-            encryptAES(payload, key);
+                    if (!key) {
+                        throw new Error("Please enter or extract the AES key.");
+                    }
 
-        document.getElementById(
-            "outputPayload"
-        ).value = encrypted;
+                    if (!input) {
+                        throw new Error("Please enter the encrypted payload.");
+                    }
 
-        showStatus(
-            "Encryption successful.",
-            "success"
-        );
+                    const decryptedText = decryptAES(input, key);
 
-    } catch (error) {
+                    let output;
 
-        showStatus(
-            "Encryption failed:\n" + error.message,
-            "error"
-        );
-    }
-}
+                    try {
+                        const payload = JSON.parse(decryptedText);
 
-/*
- * ============================================================
- * DECRYPT BUTTON
- * ============================================================
- */
+                        output = JSON.stringify(payload, null, 4);
+                    } catch (jsonError) {
+                        output = decryptedText;
+                    }
 
-async function decryptPayload() {
+                    document.getElementById("outputPayload").value = output;
 
-    clearStatus();
+                    showStatus("Decryption successful.", "success");
+                } catch (error) {
+                    showStatus("Decryption failed:\n" + error.message, "error");
+                }
+            }
 
-    try {
+            /*
+             * ============================================================
+             * FORMAT JSON
+             * ============================================================
+             */
 
-        const key =
-            document.getElementById("aesKey").value.trim();
+            function formatJSON() {
+                clearStatus();
 
-        const input =
-            document.getElementById("inputPayload").value.trim();
+                try {
+                    const input = document.getElementById("inputPayload").value.trim();
 
-        if (!key) {
-            throw new Error(
-                "Please enter or extract the AES key."
-            );
-        }
+                    if (!input) {
+                        throw new Error("Please enter JSON.");
+                    }
 
-        if (!input) {
-            throw new Error(
-                "Please enter the encrypted payload."
-            );
-        }
+                    const json = JSON.parse(input);
 
-        const decryptedText =
-            decryptAES(input, key);
+                    document.getElementById("inputPayload").value = JSON.stringify(json, null, 4);
 
-        let output;
+                    showStatus("JSON formatted successfully.", "success");
+                } catch (error) {
+                    showStatus("Invalid JSON:\n" + error.message, "error");
+                }
+            }
 
-        try {
+            /*
+             * ============================================================
+             * COPY OUTPUT
+             * ============================================================
+             */
 
-            const payload =
-                JSON.parse(decryptedText);
+            async function copyOutput() {
+                const output = document.getElementById("outputPayload").value;
 
-            output =
-                JSON.stringify(payload, null, 4);
+                if (!output) {
+                    showStatus("There is no output to copy.", "error");
 
-        } catch (jsonError) {
-
-            output = decryptedText;
-        }
-
-        document.getElementById(
-            "outputPayload"
-        ).value = output;
-
-        showStatus(
-            "Decryption successful.",
-            "success"
-        );
-
-    } catch (error) {
-
-        showStatus(
-            "Decryption failed:\n" + error.message,
-            "error"
-        );
-    }
-}
-
-/*
- * ============================================================
- * FORMAT JSON
- * ============================================================
- */
-
-function formatJSON() {
-
-    clearStatus();
-
-    try {
-
-        const input =
-            document.getElementById(
-                "inputPayload"
-            ).value.trim();
-
-        if (!input) {
-            throw new Error("Please enter JSON.");
-        }
-
-        const json = JSON.parse(input);
-
-        document.getElementById(
-            "inputPayload"
-        ).value = JSON.stringify(
-            json,
-            null,
-            4
-        );
-
-        showStatus(
-            "JSON formatted successfully.",
-            "success"
-        );
-
-    } catch (error) {
-
-        showStatus(
-            "Invalid JSON:\n" + error.message,
-            "error"
-        );
-    }
-}
-
-/*
- * ============================================================
- * COPY OUTPUT
- * ============================================================
- */
-
-async function copyOutput() {
-
-    const output =
-        document.getElementById(
-            "outputPayload"
-        ).value;
-
-    if (!output) {
-
-        showStatus(
-            "There is no output to copy.",
-            "error"
-        );
-
-        return;
-    }
-
-    try {
-
-        await navigator.clipboard.writeText(output);
-
-        showStatus(
-            "Output copied to clipboard.",
-            "success"
-        );
-
-    } catch (error) {
-
-        showStatus(
-            "Unable to copy output.",
-            "error"
-        );
-    }
-}
-
-/*
- * ============================================================
- * STATUS
- * ============================================================
- */
-
-function showStatus(message, type) {
-
-    const status =
-        document.getElementById("status");
-
-    status.textContent = message;
-
-    status.className =
-        "status " + type;
-}
-
-function clearStatus() {
-
-    const status =
-        document.getElementById("status");
-
-    status.textContent = "";
-
-    status.className = "status";
-}
-
-/*
- * ============================================================
- * RESET
- * ============================================================
- */
-
-function resetForm() {
-
-    document.getElementById("labtx").value = "";
-
-    document.getElementById("aesKey").value = "";
-
-    document.getElementById(
-        "inputPayload"
-    ).value = "";
-
-    document.getElementById(
-        "outputPayload"
-    ).value = "";
-
-    clearStatus();
-}
-
-// PDF TO BASE64
-
-async function convertPDFToBase64() {
-    const file = document.getElementById("pdfFile").files[0];
-    const output = document.getElementById("pdfBase64Output");
-    const info = document.getElementById("pdfInfo");
-
-    clearPDFStatus();
-
-    try {
-        if (!file) {
-            throw new Error("Please select a PDF file.");
-        }
-
-        if (
-            file.type !== "application/pdf" &&
-            !file.name.toLowerCase().endsWith(".pdf")
-        ) {
-            throw new Error("Please select a PDF file.");
-        }
-
-        const base64 = await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-
-            reader.onload = () => {
-                const result = String(reader.result);
-                const comma = result.indexOf(",");
-
-                if (comma < 0) {
-                    reject(new Error("Invalid PDF data."));
                     return;
                 }
 
-                resolve(result.substring(comma + 1));
-            };
+                try {
+                    await navigator.clipboard.writeText(output);
 
-            reader.onerror = () =>
-                reject(new Error("Unable to read the PDF file."));
-
-            reader.readAsDataURL(file);
-        });
-
-        output.value = base64;
-
-        info.textContent =
-            "File: " + file.name +
-            " | Size: " + formatFileSize(file.size) +
-            " | Base64 characters: " + base64.length;
-
-        showPDFStatus("PDF converted to Base64 successfully.", "success");
-    } catch (error) {
-        showPDFStatus("Conversion failed: " + error.message, "error");
-    }
-}
-
-
-// COPY BASE64
-
-async function copyPDFBase64() {
-    const output = document.getElementById("pdfBase64Output").value;
-
-    if (!output) {
-        showPDFStatus("Please convert a PDF first.", "error");
-        return;
-    }
-
-    try {
-        await navigator.clipboard.writeText(output);
-        showPDFStatus("Base64 copied successfully.", "success");
-    } catch {
-        showPDFStatus(
-            "Clipboard access failed. Select and copy the output manually.",
-            "error"
-        );
-    }
-}
-
-
-// DOWNLOAD BASE64 AS TXT
-
-function downloadBase64Text() {
-    const base64 = document.getElementById("pdfBase64Output").value;
-
-    if (!base64) {
-        showPDFStatus("Please convert a PDF first.", "error");
-        return;
-    }
-
-    downloadBlob(
-        new Blob([base64], { type: "text/plain;charset=utf-8" }),
-        "pdf-base64.txt"
-    );
-
-    showPDFStatus("Base64 text download started.", "success");
-}
-
-
-// BASE64 TO PDF
-
-function convertBase64ToPDF() {
-    const input = document
-        .getElementById("base64Input")
-        .value.trim();
-
-    clearBase64Status();
-
-    try {
-        if (!input) {
-            throw new Error("Please paste the Base64 string.");
-        }
-
-        let base64 = input;
-
-        // Handle a PDF data URL.
-        if (/^data:/i.test(base64)) {
-            const comma = base64.indexOf(",");
-
-            if (comma === -1 ||
-                !/^data:application\/pdf;base64,/i.test(base64)) {
-                throw new Error("Invalid PDF data URL.");
+                    showStatus("Output copied to clipboard.", "success");
+                } catch (error) {
+                    showStatus("Unable to copy output.", "error");
+                }
             }
 
-            base64 = base64.substring(comma + 1);
-        }
+            /*
+             * ============================================================
+             * STATUS
+             * ============================================================
+             */
 
-        // Handle a JSON string containing Base64.
-        if (
-            base64.startsWith('"') &&
-            base64.endsWith('"')
-        ) {
-            try {
-                base64 = JSON.parse(base64);
-            } catch {
-                throw new Error("Invalid quoted Base64 string.");
+            function showStatus(message, type) {
+                const status = document.getElementById("status");
+
+                status.textContent = message;
+
+                status.className = "status " + type;
             }
-        }
 
-        // Remove whitespace and common line breaks.
-        base64 = base64.replace(/\s/g, "");
+            function clearStatus() {
+                const status = document.getElementById("status");
 
-        // Remove optional Base64 formatting prefix.
-        if (base64.startsWith("base64,")) {
-            base64 = base64.substring(7);
-        }
+                status.textContent = "";
 
-        // Validate characters.
-        if (!/^[A-Za-z0-9+/]*={0,2}$/.test(base64)) {
-            throw new Error(
-                "Invalid Base64. Remove JSON wrappers or other extra characters."
-            );
-        }
+                status.className = "status";
+            }
 
-        if (!base64 || base64.length % 4 === 1) {
-            throw new Error("Base64 data is incomplete or invalid.");
-        }
+            /*
+             * ============================================================
+             * RESET
+             * ============================================================
+             */
 
-        // Restore missing padding.
-        base64 += "=".repeat((4 - base64.length % 4) % 4);
+            function resetForm() {
+                document.getElementById("labtx").value = "";
 
-        // Decode.
-        const binary = atob(base64);
+                document.getElementById("aesKey").value = "";
 
-        // Check PDF signature.
-        if (
-            binary.length < 5 ||
-            binary.substring(0, 5) !== "%PDF-"
-        ) {
-            throw new Error(
-                "Decoded data is not a PDF. Verify the Base64 source."
-            );
-        }
+                document.getElementById("inputPayload").value = "";
 
-        // Convert binary bytes without changing PDF content.
-        const bytes = new Uint8Array(binary.length);
+                document.getElementById("outputPayload").value = "";
 
-        for (let i = 0; i < binary.length; i++) {
-            bytes[i] = binary.charCodeAt(i);
-        }
+                clearStatus();
+            }
 
-        const blob = new Blob(
-            [bytes],
-            { type: "application/pdf" }
-        );
+            // PDF TO BASE64
 
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
+            async function convertPDFToBase64() {
+                const file = document.getElementById("pdfFile").files[0];
+                const output = document.getElementById("pdfBase64Output");
+                const info = document.getElementById("pdfInfo");
 
-        link.href = url;
-        link.download = "converted.pdf";
+                clearPDFStatus();
 
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
+                try {
+                    if (!file) {
+                        throw new Error("Please select a PDF file.");
+                    }
 
-        setTimeout(() => URL.revokeObjectURL(url), 10000);
+                    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+                        throw new Error("Please select a PDF file.");
+                    }
 
-        showBase64Status(
-            "PDF decoded and downloaded. If it still won't open, the source Base64 may be incomplete or corrupted.",
-            "success"
-        );
+                    const base64 = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
 
-    } catch (error) {
-        showBase64Status(
-            "Conversion failed: " + error.message,
-            "error"
-        );
-    }
-}
+                        reader.onload = () => {
+                            const result = String(reader.result);
+                            const comma = result.indexOf(",");
 
-function clearBase64Status() {
-    const status = document.getElementById("base64Status");
+                            if (comma < 0) {
+                                reject(new Error("Invalid PDF data."));
+                                return;
+                            }
 
-    if (status) {
-        status.textContent = "";
-        status.className = "status";
-    }
-}
+                            resolve(result.substring(comma + 1));
+                        };
 
-function showBase64Status(message, type) {
-    const status = document.getElementById("base64Status");
+                        reader.onerror = () => reject(new Error("Unable to read the PDF file."));
 
-    if (!status) {
-        console.error("Element #base64Status not found.");
-        return;
-    }
+                        reader.readAsDataURL(file);
+                    });
 
-    status.textContent = message;
-    status.className = "status " + type;
-}
+                    output.value = base64;
 
-function resetBase64ToPDF() {
-    document.getElementById("base64Input").value = "";
-    clearBase64Status();
-}
+                    info.textContent =
+                        "File: " +
+                        file.name +
+                        " | Size: " +
+                        formatFileSize(file.size) +
+                        " | Base64 characters: " +
+                        base64.length;
 
-function resetPDFToBase64() {
-    document.getElementById("pdfFile").value = "";
-    document.getElementById("pdfBase64Output").value = "";
-    document.getElementById("pdfInfo").textContent = "";
+                    showPDFStatus("PDF converted to Base64 successfully.", "success");
+                } catch (error) {
+                    showPDFStatus("Conversion failed: " + error.message, "error");
+                }
+            }
 
-    if (typeof clearPDFStatus === "function") {
-        clearPDFStatus();
-    } else {
-        const status = document.getElementById("pdfStatus");
+            // COPY BASE64
 
-        if (status) {
-            status.textContent = "";
-            status.className = "status";
-        }
-    }
-}
+            async function copyPDFBase64() {
+                const output = document.getElementById("pdfBase64Output").value;
 
-function clearPDFStatus() {
-    const status = document.getElementById("pdfStatus");
+                if (!output) {
+                    showPDFStatus("Please convert a PDF first.", "error");
+                    return;
+                }
 
-    if (status) {
-        status.textContent = "";
-        status.className = "status";
-    }
-}
+                try {
+                    await navigator.clipboard.writeText(output);
+                    showPDFStatus("Base64 copied successfully.", "success");
+                } catch {
+                    showPDFStatus("Clipboard access failed. Select and copy the output manually.", "error");
+                }
+            }
 
-function showPDFStatus(message, type) {
-    const status = document.getElementById("pdfStatus");
+            // DOWNLOAD BASE64 AS TXT
 
-    if (status) {
-        status.textContent = message;
-        status.className = "status " + type;
-    }
-}
+            function downloadBase64Text() {
+                const base64 = document.getElementById("pdfBase64Output").value;
 
-function openTab(tabId, button) { document.querySelectorAll(".tab-content").forEach(function(tab) { tab.classList.remove("active"); });
+                if (!base64) {
+                    showPDFStatus("Please convert a PDF first.", "error");
+                    return;
+                }
 
-document.querySelectorAll(".tab-button").forEach(function(btn) { btn.classList.remove("active"); });
+                downloadBlob(new Blob([base64], { type: "text/plain;charset=utf-8" }), "pdf-base64.txt");
 
-const selectedTab = document.getElementById(tabId);
+                showPDFStatus("Base64 text download started.", "success");
+            }
 
-if (selectedTab) { selectedTab.classList.add("active"); button.classList.add("active"); } }
+            // BASE64 TO PDF
 
-</script>
+            function convertBase64ToPDF() {
+                const input = document.getElementById("base64Input").value.trim();
 
-</body>
+                clearBase64Status();
+
+                try {
+                    if (!input) {
+                        throw new Error("Please paste the Base64 string.");
+                    }
+
+                    let base64 = input;
+
+                    // Handle a PDF data URL.
+                    if (/^data:/i.test(base64)) {
+                        const comma = base64.indexOf(",");
+
+                        if (comma === -1 || !/^data:application\/pdf;base64,/i.test(base64)) {
+                            throw new Error("Invalid PDF data URL.");
+                        }
+
+                        base64 = base64.substring(comma + 1);
+                    }
+
+                    // Handle a JSON string containing Base64.
+                    if (base64.startsWith('"') && base64.endsWith('"')) {
+                        try {
+                            base64 = JSON.parse(base64);
+                        } catch {
+                            throw new Error("Invalid quoted Base64 string.");
+                        }
+                    }
+
+                    // Remove whitespace and common line breaks.
+                    base64 = base64.replace(/\s/g, "");
+
+                    // Remove optional Base64 formatting prefix.
+                    if (base64.startsWith("base64,")) {
+                        base64 = base64.substring(7);
+                    }
+
+                    // Validate characters.
+                    if (!/^[A-Za-z0-9+/]*={0,2}$/.test(base64)) {
+                        throw new Error("Invalid Base64. Remove JSON wrappers or other extra characters.");
+                    }
+
+                    if (!base64 || base64.length % 4 === 1) {
+                        throw new Error("Base64 data is incomplete or invalid.");
+                    }
+
+                    // Restore missing padding.
+                    base64 += "=".repeat((4 - (base64.length % 4)) % 4);
+
+                    // Decode.
+                    const binary = atob(base64);
+
+                    // Check PDF signature.
+                    if (binary.length < 5 || binary.substring(0, 5) !== "%PDF-") {
+                        throw new Error("Decoded data is not a PDF. Verify the Base64 source.");
+                    }
+
+                    // Convert binary bytes without changing PDF content.
+                    const bytes = new Uint8Array(binary.length);
+
+                    for (let i = 0; i < binary.length; i++) {
+                        bytes[i] = binary.charCodeAt(i);
+                    }
+
+                    const blob = new Blob([bytes], { type: "application/pdf" });
+
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement("a");
+
+                    link.href = url;
+                    link.download = "converted.pdf";
+
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+
+                    setTimeout(() => URL.revokeObjectURL(url), 10000);
+
+                    showBase64Status(
+                        "PDF decoded and downloaded. If it still won't open, the source Base64 may be incomplete or corrupted.",
+                        "success"
+                    );
+                } catch (error) {
+                    showBase64Status("Conversion failed: " + error.message, "error");
+                }
+            }
+
+            function clearBase64Status() {
+                const status = document.getElementById("base64Status");
+
+                if (status) {
+                    status.textContent = "";
+                    status.className = "status";
+                }
+            }
+
+            function showBase64Status(message, type) {
+                const status = document.getElementById("base64Status");
+
+                if (!status) {
+                    console.error("Element #base64Status not found.");
+                    return;
+                }
+
+                status.textContent = message;
+                status.className = "status " + type;
+            }
+
+            function resetBase64ToPDF() {
+                document.getElementById("base64Input").value = "";
+                clearBase64Status();
+            }
+
+            function resetPDFToBase64() {
+                document.getElementById("pdfFile").value = "";
+                document.getElementById("pdfBase64Output").value = "";
+                document.getElementById("pdfInfo").textContent = "";
+
+                if (typeof clearPDFStatus === "function") {
+                    clearPDFStatus();
+                } else {
+                    const status = document.getElementById("pdfStatus");
+
+                    if (status) {
+                        status.textContent = "";
+                        status.className = "status";
+                    }
+                }
+            }
+
+            function clearPDFStatus() {
+                const status = document.getElementById("pdfStatus");
+
+                if (status) {
+                    status.textContent = "";
+                    status.className = "status";
+                }
+            }
+
+            function showPDFStatus(message, type) {
+                const status = document.getElementById("pdfStatus");
+
+                if (status) {
+                    status.textContent = message;
+                    status.className = "status " + type;
+                }
+            }
+
+            function openTab(tabId, button) {
+                document.querySelectorAll(".tab-content").forEach(function (tab) {
+                    tab.classList.remove("active");
+                });
+
+                document.querySelectorAll(".tab-button").forEach(function (btn) {
+                    btn.classList.remove("active");
+                });
+
+                const selectedTab = document.getElementById(tabId);
+
+                if (selectedTab) {
+                    selectedTab.classList.add("active");
+                    button.classList.add("active");
+                }
+            }
+
+            function generateRandomString() {
+                const lengthInput = document.getElementById("randomLength");
+                const output = document.getElementById("randomOutput");
+                const status = document.getElementById("randomStatus");
+
+                status.textContent = "";
+                status.className = "status";
+
+                const length = Number(lengthInput.value);
+
+                if (!Number.isSafeInteger(length) || length < 1 || length > 10000) {
+                    status.textContent = "Enter a length between 1 and 10000.";
+                    status.className = "status error";
+                    return;
+                }
+
+                const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+                // Use a cryptographically secure random number generator.
+                const randomValues = new Uint8Array(length);
+                const result = [];
+
+                // Rejection sampling avoids modulo bias.
+                const limit = 256 - (256 % characters.length);
+
+                while (result.length < length) {
+                    crypto.getRandomValues(randomValues);
+
+                    for (let i = 0; i < randomValues.length; i++) {
+                        const value = randomValues[i];
+
+                        if (value < limit) {
+                            result.push(characters[value % characters.length]);
+
+                            if (result.length === length) {
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                output.value = result.join("");
+
+                status.textContent = "Generated " + length + " characters successfully.";
+                status.className = "status success";
+            }
+
+            async function copyRandomString() {
+                const output = document.getElementById("randomOutput");
+                const status = document.getElementById("randomStatus");
+
+                if (!output.value) {
+                    status.textContent = "Generate a string first.";
+                    status.className = "status error";
+                    return;
+                }
+
+                try {
+                    await navigator.clipboard.writeText(output.value);
+                    status.textContent = "Random string copied successfully.";
+                    status.className = "status success";
+                } catch (error) {
+                    status.textContent = "Unable to copy. Please select and copy the string manually.";
+                    status.className = "status error";
+                }
+            }
+
+            function resetRandomGenerator() {
+                document.getElementById("randomLength").value = "16";
+                document.getElementById("randomOutput").value = "";
+
+                const status = document.getElementById("randomStatus");
+                status.textContent = "";
+                status.className = "status";
+            }
+        </script>
+    </body>
 </html>
